@@ -2,15 +2,15 @@ import socket
 import time
 import sys
 import urllib.request
-import json
-import ast
 import random
 
-# Account parameters used to connect to Twitch
+# Twitch endpoint and interval between messages to be sent
 HOST = "irc.chat.twitch.tv"  # twitch irc server
 PORT = 6667  # port 
 MESSAGE_INTERVAL = 1200 # message interval in seconds
 
+
+# Checks if twitch channel is live
 def isChannelLive(clientId, channel):
     url = str('https://api.twitch.tv/kraken/streams?client_id='+
               clientId + "&channel=" + channel[1:])
@@ -48,18 +48,17 @@ def main():
 
     socket = connect(username, token, channel)
 
-    # Loads tanner pastas from tanner.txt file
+    # Loads Tanner pastas from tanner.txt file
     text_file = open("tanner.txt",'r')
     data = text_file.read()
     messages = data.split("\n")
 
-    # Replaces "Octavian", "Kripp" and "Kripparian" from Tanner pastas
+    # Replaces "Octavian", "Kripp" and "Kripparian" in Tanner pastas by
+    # channel name if chanel is not nl_Kripp
     if channel != "#nl_Kripp":
         messages = [s.replace('Octavian', channel[1:]) for s in messages]
         messages = [s.replace('Kripparian', channel[1:]) for s in messages]
         messages = [s.replace('Kripp', channel[1:]) for s in messages]
-
-    print(token)
 
     # Sends a random message from messages every MESSAGE_INTERVAL if streamer
     # is online
