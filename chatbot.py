@@ -7,8 +7,9 @@ import ast
 import random
 
 # Account parameters used to connect to Twitch
-HOST = "irc.chat.twitch.tv"  # the twitch irc server
-PORT = 6667  # always use port 6667
+HOST = "irc.chat.twitch.tv"  # twitch irc server
+PORT = 6667  # port 
+MESSAGE_INTERVAL = 1200 # message interval in seconds
 
 def isChannelLive(clientId, channel):
     url = str('https://api.twitch.tv/kraken/streams?client_id='+
@@ -39,7 +40,10 @@ def main():
 
     username  = sys.argv[1]
     clientId = sys.argv[2]
-    token     = "oauth:" + sys.argv[3]
+    if sys.argv[3][:6] != "oauth:":
+        token = "oauth:" + sys.argv[3]
+    else:
+        token = sys.argv[3]
     channel   = "#" + sys.argv[4]
 
     socket = connect(username, token, channel)
@@ -55,12 +59,16 @@ def main():
         messages = [s.replace('Kripparian', channel[1:]) for s in messages]
         messages = [s.replace('Kripp', channel[1:]) for s in messages]
 
+    print(token)
+
+    # Sends a random message from messages every MESSAGE_INTERVAL if streamer
+    # is online
     while True:
         if isChannelLive(clientId, channel) > 0:
             text = "PRIVMSG {} :{}".format(channel, random.choice(messages))
             text = text + "\r\n"
             socket.send(text.encode('utf-8'))
-        time.sleep(1200)
+        time.sleep(MESSAGE_INTERVAL)
 
 
 if __name__ == "__main__":
