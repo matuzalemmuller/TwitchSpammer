@@ -1,93 +1,67 @@
-
-'''
-Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance with the License. A copy of the License is located at
-    http://aws.amazon.com/apache2.0/
-or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-'''
-
+import socket
+import time
 import sys
-import irc.bot
-import requests
+import urllib.request
+import json
+import ast
+import random
 
-class TwitchBot(irc.bot.SingleServerIRCBot):
-    def __init__(self, username, client_id, token, channel):
-        self.client_id = client_id
-        self.token = token
-        self.channel = '#' + channel
+# Account parameters used to connect to Twitch
+HOST = "irc.chat.twitch.tv"  # the twitch irc server
+PORT = 6667  # always use port 6667
 
-        # Get the channel id, we will need this for v5 API calls
-        url = 'https://api.twitch.tv/kraken/users?login=' + channel
-        headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-        r = requests.get(url, headers=headers).json()
-        self.channel_id = r['users'][0]['_id']
+def isChannelLive(clientId, channel):
+    url = str('https://api.twitch.tv/kraken/streams?client_id='+
+              clientId + "&channel=" + channel[1:])
+    try:
+        result = urllib.request.urlopen(url)
+        result_decoded = result.read().decode("utf-8")
+        return int(result_decoded[10])
+    except urllib.error.URLError as e:
+        print(e.reason)
+        return -1
 
-        # Create IRC bot connection
-        server = 'irc.chat.twitch.tv'
-        port = 6667
-        print("Connecting to " + server + " on port " + str(port) + "...")
-        irc.bot.SingleServerIRCBot.__init__(self, [(server, port, token)], username, username)
-        
 
-    def on_welcome(self, c, e):
-        print("Joining " + self.channel)
+# Connects to Twitch IRC
+def connect(username, token, channel):
+    s = socket.socket()
+    s.connect((HOST, PORT))
+    s.send("PASS {}\r\n".format(token).encode("utf-8"))
+    s.send("NICK {}\r\n".format(username).encode("utf-8"))
+    s.send("JOIN {}\r\n".format(channel).encode("utf-8"))
+    return s
 
-        # You must request specific capabilities before you can use them
-        c.cap('REQ', ':twitch.tv/membership')
-        c.cap('REQ', ':twitch.tv/tags')
-        c.cap('REQ', ':twitch.tv/commands')
-        c.join(self.channel)
-
-    def on_pubmsg(self, c, e):
-
-        # If a chat message starts with an exclamation point, try to run it as a command
-        if e.arguments[0][:1] == '!':
-            cmd = e.arguments[0].split(' ')[0][1:]
-            print("Received command: " + cmd)
-            self.do_command(e, cmd)
-        return
-
-    def do_command(self, e, cmd):
-        c = self.connection
-
-        # Poll the API to get current game.
-        if cmd == "game":
-            url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
-            headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-            r = requests.get(url, headers=headers).json()
-            c.privmsg(self.channel, r['display_name'] + ' is currently playing ' + r['game'])
-
-        # Poll the API the get the current status of the stream
-        elif cmd == "title":
-            url = 'https://api.twitch.tv/kraken/channels/' + self.channel_id
-            headers = {'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-            r = requests.get(url, headers=headers).json()
-            c.privmsg(self.channel, r['display_name'] + ' channel title is currently ' + r['status'])
-
-        # Provide basic information to viewers for specific commands
-        elif cmd == "raffle":
-            message = "This is an example bot, replace this text with your raffle text."
-            c.privmsg(self.channel, message)
-        elif cmd == "schedule":
-            message = "This is an example bot, replace this text with your schedule text."            
-            c.privmsg(self.channel, message)
-
-        # The command was not recognized
-        else:
-            c.privmsg(self.channel, "Did not understand command: " + cmd)
 
 def main():
     if len(sys.argv) != 5:
-        print("Usage: twitchbot <username> <client id> <token> <channel>")
+        print("Usage: twitchbot <username> <token> <channel>")
         sys.exit(1)
 
     username  = sys.argv[1]
-    client_id = sys.argv[2]
-    token     = sys.argv[3]
-    channel   = sys.argv[4]
+    clientId = sys.argv[2]
+    token     = "oauth:" + sys.argv[3]
+    channel   = "#" + sys.argv[4]
 
-    bot = TwitchBot(username, client_id, token, channel)
-    bot.start()
+    socket = connect(username, token, channel)
+
+    # Loads tanner pastas from tanner.txt file
+    text_file = open("tanner.txt",'r')
+    data = text_file.read()
+    messages = data.split("\n")
+
+    # Replaces "Octavian", "Kripp" and "Kripparian" from Tanner pastas
+    if channel != "#nl_Kripp":
+        messages = [s.replace('Octavian', channel[1:]) for s in messages]
+        messages = [s.replace('Kripparian', channel[1:]) for s in messages]
+        messages = [s.replace('Kripp', channel[1:]) for s in messages]
+
+    while True:
+        if isChannelLive(clientId, channel) > 0:
+            text = "PRIVMSG {} :{}".format(channel, random.choice(messages))
+            text = text + "\r\n"
+            socket.send(text.encode('utf-8'))
+        time.sleep(1200)
+
 
 if __name__ == "__main__":
     main()
