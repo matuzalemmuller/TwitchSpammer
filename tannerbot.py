@@ -101,9 +101,9 @@ def main():
     # Replaces "Octavian", "Kripp" and "Kripparian" in Tanner pastas by
     # channel name if channel is not nl_Kripp
     if channel != "#nl_Kripp":
-        messages = [s.replace('Octavian', channel[1:]) for s in messages]
-        messages = [s.replace('Kripparian', channel[1:]) for s in messages]
-        messages = [s.replace('Kripp', channel[1:]) for s in messages]
+        messages = [m.replace('Octavian', channel[1:]) for m in messages]
+        messages = [m.replace('Kripparian', channel[1:]) for m in messages]
+        messages = [m.replace('Kripp', channel[1:]) for m in messages]
 
     # Sends a random message from messages every MESSAGE_INTERVAL_SEC if 
     # streamer is online
