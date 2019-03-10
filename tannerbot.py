@@ -32,7 +32,10 @@ def channelExists(clientId, channel):
     try:
         response = requests.get(url)
         response_content = json.loads(response.content)
-        return response_content["status"]
+        code = response_content["status"]
+        if code == 404:
+            print("Channel does not exist")
+            sys.exit(1)
     except requests.exceptions.RequestException as e:
         print(e)
         sys.exit(1)
@@ -53,6 +56,17 @@ def connect(username, token, channel):
     return s
 
 
+def sendMessage(s, message, channel):
+    text = "PRIVMSG {} :{}".format(channel, message)
+    text = text + "\r\n"
+    try:
+        s.send(text.encode('utf-8'))
+        return True
+    except socket.error as e:
+        print(e)
+        return False
+
+
 def main():
     if len(sys.argv) != 5:
         print("Usage: tannerbot <username> <client_id> <token> <channel>")
@@ -66,9 +80,8 @@ def main():
         token = sys.argv[3]
     channel = "#" + sys.argv[4]
 
-    if channelExists(clientId, channel) == 404:
-        print("Channel not found!")
-        sys.exit(1)
+    if not channelExists(clientId, channel):
+        print("Channel located!")
 
     s = connect(username, token, channel)
 
@@ -95,13 +108,8 @@ def main():
         if isChannelLive(clientId, channel) > 0:
             print("Channel " + channel + " is online")
             message = random.choice(messages)
-            text = "PRIVMSG {} :{}".format(channel, message)
-            text = text + "\r\n"
-            try:
-                s.send(text.encode('utf-8'))
+            if sendMessage(s, message, channel):
                 print("Sent message: " + message)
-            except socket.error as e:
-                print(e)
         else:
             print("Channel " + channel + " is offline")
 
