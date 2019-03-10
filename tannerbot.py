@@ -5,11 +5,12 @@ import random
 import requests
 import json
 
+
 # Twitch endpoint and interval between messages to be sent
 HOST = "irc.chat.twitch.tv"  # twitch irc server
 PORT = 6667  # port
 MESSAGE_INTERVAL_MIN = 20  # message interval in minutes
-MESSAGE_INTERVAL_SEC = MESSAGE_INTERVAL_MIN * 60 # message interval in seconds
+MESSAGE_INTERVAL_SEC = MESSAGE_INTERVAL_MIN * 60  # message interval in seconds
 
 
 # Checks if twitch channel is live
@@ -23,6 +24,18 @@ def isChannelLive(clientId, channel):
     except requests.exceptions.RequestException as e:
         print(e)
         return -1
+
+
+def channelExists(clientId, channel):
+    url = str('https://api.twitch.tv/kraken/channels/' +
+              channel[1:] + "?client_id=" + clientId)
+    try:
+        response = requests.get(url)
+        response_content = json.loads(response.content)
+        return response_content["status"]
+    except requests.exceptions.RequestException as e:
+        print(e)
+        sys.exit(1)
 
 
 # Connects to Twitch IRC
@@ -52,6 +65,10 @@ def main():
     else:
         token = sys.argv[3]
     channel = "#" + sys.argv[4]
+
+    if channelExists(clientId, channel) == 404:
+        print("Channel not found!")
+        sys.exit(1)
 
     s = connect(username, token, channel)
 
