@@ -2,7 +2,7 @@
 
 ## Description
 
-This project sends Tanner messages to a Twitch channel using your account. The messages are by default addressed to [Kripparian](https://www.twitch.tv/nl_kripp), but they will be addressed to any other streamer by calling them by the channel name.
+This project sends Tanner messages to a Twitch channel using your account. The messages are by default addressed to [Kripparian](https://www.twitch.tv/nl_kripp), but they will be addressed to any other streamer by calling them by the channel name. Messages are sent every 20 minutes to not flood the chat.
 
 ## Who is Tanner?
 
