@@ -26,6 +26,7 @@ def isChannelLive(clientId, channel):
         return -1
 
 
+# Checks is twitch channel exists
 def channelExists(clientId, channel):
     url = str('https://api.twitch.tv/kraken/channels/' +
               channel[1:] + "?client_id=" + clientId)
@@ -56,6 +57,7 @@ def connect(username, token, channel):
     return s
 
 
+# Sends message to twitch chat through socket
 def sendMessage(s, message, channel):
     text = "PRIVMSG {} :{}".format(channel, message)
     text = text + "\r\n"
