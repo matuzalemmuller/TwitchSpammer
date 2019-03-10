@@ -8,7 +8,8 @@ import json
 # Twitch endpoint and interval between messages to be sent
 HOST = "irc.chat.twitch.tv"  # twitch irc server
 PORT = 6667  # port
-MESSAGE_INTERVAL = 1200  # message interval in seconds
+MESSAGE_INTERVAL_MIN = 20  # message interval in minutes
+MESSAGE_INTERVAL_SEC = MESSAGE_INTERVAL_MIN * 60 # message interval in seconds
 
 
 # Checks if twitch channel is live
@@ -87,8 +88,8 @@ def main():
         else:
             print("Channel " + channel + " is offline")
 
-        print("Waiting " + str(MESSAGE_INTERVAL) + " seconds...")
-        time.sleep(MESSAGE_INTERVAL)
+        print("Waiting " + str(MESSAGE_INTERVAL_MIN) + " minutes...")
+        time.sleep(MESSAGE_INTERVAL_SEC)
         print("Time to send message!")
 
 
