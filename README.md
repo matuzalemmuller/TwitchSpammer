@@ -8,6 +8,10 @@ This project sends Tanner messages to a Twitch channel using your account. The m
 
 Definitely not a streamer. Why tell you, when I can [show you](https://www.reddit.com/r/LivestreamFail/comments/9qb1f8/tanner_jebaits_kripp/)?
 
+<figure class="video_container">
+<iframe src="https://clips.twitch.tv/embed?clip=SleepyAbrasiveOkapiImGlitch" frameborder="0" allowfullscreen="true"></iframe>
+</figure>
+
 ## Instructions
 
 In order to run this code, you need to register an application in Twitch so you can get the client information to connect the bot to your account. More information on what is needed to run the bot is below.
