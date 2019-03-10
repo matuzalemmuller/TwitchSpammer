@@ -27,5 +27,6 @@ before_script:
 
 test:
   script:
-    - python3 -c 'import tannerbot; tannerbot.channelExists("0hjnfz6gq7uty8syel0uxhataeyk4u", "#nl_Kripp")'
-    - python3 -c 'import tannerbot; tannerbot.isChannelLive("0hjnfz6gq7uty8syel0uxhataeyk4u", "#nl_Kripp")'
+    # - python3 -c 'import tannerbot; tannerbot.channelExists("0hjnfz6gq7uty8syel0uxhataeyk4u", "#nl_Kripp")'
+    # - python3 -c 'import tannerbot; tannerbot.isChannelLive("0hjnfz6gq7uty8syel0uxhataeyk4u", "#nl_Kripp")'
+    - python3 tannerbot.py $USERNAME $CLIENT_ID $OAUTH $CHANNEL
