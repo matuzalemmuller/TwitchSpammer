@@ -27,5 +27,6 @@ before_script:
 
 test:
   script:
-    - CHANNEL_LIVE = $(python3 -c 'import tannerbot; print(tannerbot.channelExists("0hjnfz6gq7uty8syel0uxhataeyk4u", "nl_Kripp211312312312"))')
-    - echo $CHANNEL_LIVE
+    - CHANNEL_LIVE=$(python3 -c 'import tannerbot; print(tannerbot.channelExists("0hjnfz6gq7uty8syel0uxhataeyk4u", "nl_Kripp"))')
+    - if [ $CHANNEL_LIVE -ge 0 ]; then exit 1; fi
+    - if [ $CHANNEL_LIVE -eq 404 ]; then exit 1; fi
