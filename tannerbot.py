@@ -4,6 +4,7 @@ import sys
 import random
 import requests
 import json
+import os
 
 
 # Twitch endpoint and interval between messages to be sent
@@ -116,6 +117,8 @@ def main():
         else:
             print("Channel " + channel + " is offline")
 
+        if os.environ['TEST'] == 1:
+            sys.exit(0)
         print("Waiting " + str(MESSAGE_INTERVAL_MIN) + " minutes...")
         time.sleep(MESSAGE_INTERVAL_SEC)
         print("Time to send message!")
