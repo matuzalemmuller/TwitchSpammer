@@ -71,7 +71,6 @@ def sendMessage(s, message, channel):
 
 
 def main():
-    print(len(sys.argv))
     if len(sys.argv) != 5:
         print("Usage: tannerbot <username> <client_id> <token> <channel>")
         sys.exit(1)
@@ -117,8 +116,11 @@ def main():
         else:
             print("Channel " + channel + " is offline")
 
-        if os.environ['TEST'] == 1:
+        # Test condition for CI/CD integration
+        if os.environ.get("TEST") == "1":
             sys.exit(0)
+
+        # Wait to send another message
         print("Waiting " + str(MESSAGE_INTERVAL_MIN) + " minutes...")
         time.sleep(MESSAGE_INTERVAL_SEC)
         print("Time to send message!")
