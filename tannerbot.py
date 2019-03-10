@@ -42,7 +42,7 @@ def connect(username, token, channel):
 
 def main():
     if len(sys.argv) != 5:
-        print("Usage: twitchbot <username> <client_id> <token> <channel>")
+        print("Usage: tannerbot <username> <client_id> <token> <channel>")
         sys.exit(1)
 
     username = sys.argv[1]
