@@ -10,7 +10,7 @@ Definitely not a streamer. Why tell you, when I can [show you](https://www.reddi
 
 ## Instructions
 
-In order to run this code, you need to register an application in Twitch so you can get the client information to connect the bot to your account. More information on what is needed to run the bot is below.
+In order to run this code, you need to register an application in Twitch so you can get the client information to connect the bot to your account. More information on what is needed to run the bot below.
 
 To run TannerBot, simply download this repo, install the dependencies and run the code.
 
