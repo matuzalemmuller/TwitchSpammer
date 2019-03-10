@@ -89,8 +89,8 @@ def main():
         messages = [s.replace('Kripparian', channel[1:]) for s in messages]
         messages = [s.replace('Kripp', channel[1:]) for s in messages]
 
-    # Sends a random message from messages every MESSAGE_INTERVAL if streamer
-    # is online
+    # Sends a random message from messages every MESSAGE_INTERVAL_SEC if 
+    # streamer is online
     while True:
         if isChannelLive(clientId, channel) > 0:
             print("Channel " + channel + " is online")
