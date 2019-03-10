@@ -28,6 +28,6 @@ before_script:
 test:
   script:
     - python3 -c 'import tannerbot; print(tannerbot.channelExists("0hjnfz6gq7uty8syel0uxhataeyk4u", "nl_Kripp2121"))'
-    - CHANNEL_LIVE=$(python3 -c 'import tannerbot; print(tannerbot.channelExists("0hjnfz6gq7uty8syel0uxhataeyk4u", "nl_Kripp2121"))')
-    - if [ $CHANNEL_LIVE -lt 0 ]; then exit 1; fi
-    - if [ $CHANNEL_LIVE -eq 404 ]; then exit 1; fi
+    # - CHANNEL_EXISTS=$(python3 -c 'import tannerbot; print(tannerbot.channelExists("0hjnfz6gq7uty8syel0uxhataeyk4u", "nl_Kripp2121"))')
+    # - if [ &CHANNEL_EXISTS -lt 0 ]; then exit 1; fi
+    # - if [ &CHANNEL_EXISTS -eq 404 ]; then exit 1; fi
