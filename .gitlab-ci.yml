@@ -28,3 +28,5 @@ before_script:
 test:
   script:
     - python3 -c 'import tannerbot; tannerbot.channelExists("0hjnfz6gq7uty8syel0uxhataeyk4u", "#nl_Kripp")'
+    - CHANNEL_LIVE=$(python3 -c 'import tannerbot; print(tannerbot.isChannelLive("0hjnfz6gq7uty8syel0uxhataeyk4u", "#4nl_Kripp"))')
+    - if [ $CHANNEL_LIVE -gt 0 ]; then echo "Channel is live"; else echo "Channel is offline"; fi
