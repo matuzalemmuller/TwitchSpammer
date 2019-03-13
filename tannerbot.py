@@ -70,7 +70,8 @@ def sendMessage(s, message, channel):
 
 def main():
     if len(sys.argv) != 5:
-        print("Usage: tannerbot <username> <client_id> <token> <channel>")
+        print("Only " + str(len(sys.argv)) + " arguments were given! \
+              Usage: tannerbot <username> <client_id> <token> <channel>")
         sys.exit(1)
 
     username = sys.argv[1]
@@ -105,7 +106,7 @@ def main():
 
     # Replaces "Octavian", "Kripp" and "Kripparian" in Tanner pastas by
     # channel name if channel is not nl_Kripp
-    if channel != "#nl_Kripp":
+    if channel != "#nl_Kripp" and channel != "#nl_kripp":
         messages = [m.replace('Octavian', channel[1:]) for m in messages]
         messages = [m.replace('Kripparian', channel[1:]) for m in messages]
         messages = [m.replace('Kripp', channel[1:]) for m in messages]
