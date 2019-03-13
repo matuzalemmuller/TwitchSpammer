@@ -105,7 +105,7 @@ def main():
 
     # Replaces "Octavian", "Kripp" and "Kripparian" in Tanner pastas by
     # channel name if channel is not nl_Kripp
-    if channel != "#nl_Kripp":
+    if channel != "#nl_Kripp" and channel != "#nl_kripp":
         messages = [m.replace('Octavian', channel[1:]) for m in messages]
         messages = [m.replace('Kripparian', channel[1:]) for m in messages]
         messages = [m.replace('Kripp', channel[1:]) for m in messages]
