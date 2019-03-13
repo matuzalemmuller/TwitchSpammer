@@ -1,3 +1,4 @@
 file.txt
 __pycache__
 .vscode
+.env.list
