@@ -29,3 +29,13 @@ Example:
 ```
 python3 tannerbot.py TannerBot xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx oauth:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy channel_name
 ```
+
+A container version of the app is also available in the [registry](https://gitlab.com/matuzalemmuller/tannerbot/container_registry). To run the container, you must run the following code:
+
+```
+docker run --env USERNAME=username \
+           --env CLIENT_ID=client_id \
+           --env OAUTH=token \
+           --env CHANNEL=channel \
+           -d registry.gitlab.com/matuzalemmuller/tannerbot:v0.1
+```
