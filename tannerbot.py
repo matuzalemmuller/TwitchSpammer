@@ -70,7 +70,7 @@ def sendMessage(s, message, channel):
 
 def main():
     if len(sys.argv) != 5:
-        print("Only " + len(sys.argv) + " arguments were given! \
+        print("Only " + str(len(sys.argv)) + " arguments were given! \
               Usage: tannerbot <username> <client_id> <token> <channel>")
         sys.exit(1)
 
