@@ -35,12 +35,10 @@ def channelExists(clientId, channel):
         response = requests.get(url)
         response_content = json.loads(response.content)
         code = response_content["status"]
-        if code == 404:
-            print("Channel does not exist")
-            sys.exit(1)
+        return code
     except requests.exceptions.RequestException as e:
         print(e)
-        sys.exit(1)
+        return -1
 
 
 # Connects to Twitch IRC
@@ -83,7 +81,14 @@ def main():
         token = sys.argv[3]
     channel = "#" + sys.argv[4]
 
-    if not channelExists(clientId, channel):
+    channel_exists = channelExists(clientId, channel)
+
+    if channel_exists == 404:
+        print("Channel does not exist!")
+        sys.exit(1)
+    elif channel_exists == -1:
+        sys.exit(1)
+    else:
         print("Channel located!")
 
     s = connect(username, token, channel)
@@ -108,13 +113,16 @@ def main():
     # Sends a random message from messages every MESSAGE_INTERVAL_SEC if 
     # streamer is online
     while True:
-        if isChannelLive(clientId, channel) > 0:
+        channel_live = isChannelLive(clientId, channel)
+        if channel_live > 0:
             print("Channel " + channel + " is online")
             message = random.choice(messages)
             if sendMessage(s, message, channel):
                 print("Sent message: " + message)
-        else:
+        elif channel_live == 0:
             print("Channel " + channel + " is offline")
+        else:
+            pass
 
         # Test condition for CI/CD integration
         if os.environ.get("TEST") == "1":
