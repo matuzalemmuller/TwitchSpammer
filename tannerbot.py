@@ -126,6 +126,7 @@ def main():
 
         # Test condition for CI/CD integration
         if os.environ.get("TEST") == "1":
+            print("This was a successfull test")
             sys.exit(0)
 
         # Wait to send another message
