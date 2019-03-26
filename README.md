@@ -1,4 +1,5 @@
 # TannerBot
+*Hosted at [GitLab](https://gitlab.com/matuzalemmuller/tannerbot) and mirrored to [GitHub](https://github.com/matuzalemmuller/TannerBot).*
 
 ## Description
 
