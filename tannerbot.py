@@ -131,6 +131,7 @@ def main():
     while True:
         channel_live = is_channel_live(clientId, channel)
         if channel_live > 0:
+            write_to_log("Channel " + channel + " is online")
             print("Channel " + channel + " is online")
             message = random.choice(messages)
             if send_message(s, message, channel):
