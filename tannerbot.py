@@ -20,7 +20,8 @@ def write_to_log(message):
         with open('log.log', 'a') as file:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             file.write(date + " - " + message + "\n")
-    except IOError:
+    except IOError as e:
+        print(e)
         print("File log.log is not available")
         sys.exit(1)
     pass
