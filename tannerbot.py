@@ -21,7 +21,7 @@ def write_to_log(message):
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             file.write(date + " - " + message + "\n")
     except IOError:
-        print("File tanner.txt is not available")
+        print("File log.log is not available")
         sys.exit(1)
     pass
 
@@ -35,6 +35,7 @@ def is_channel_live(clientId, channel):
         streamer = json.loads(streamer_html.content)
         return streamer["_total"]
     except requests.exceptions.RequestException as e:
+        write_to_log(e)
         print(e)
         return -1
 
@@ -49,41 +50,37 @@ def does_channel_exists(clientId, channel):
         code = response_content["status"]
         return code
     except requests.exceptions.RequestException as e:
+        write_to_log(e)
         print(e)
         return -1
 
 
-# Connects to Twitch IRC
-def connect(username, token, channel):
+# Connects to Twitch chat and sends message to twitch chat through socket
+def send_message(message, channel, token, username):
     s = socket.socket()
+    text = "PRIVMSG {} :{}".format(channel, message)
+    text = text + "\r\n"
     try:
         s.connect((HOST, PORT))
         s.send("PASS {}\r\n".format(token).encode("utf-8"))
         s.send("NICK {}\r\n".format(username).encode("utf-8"))
         s.send("JOIN {}\r\n".format(channel).encode("utf-8"))
-        print("Connected to twitch channel " + channel + " as " + username)
-    except socket.error as e:
-        print(e)
-        sys.exit(1)
-    return s
-
-
-# Sends message to twitch chat through socket
-def send_message(s, message, channel):
-    text = "PRIVMSG {} :{}".format(channel, message)
-    text = text + "\r\n"
-    try:
         s.send(text.encode('utf-8'))
+        s.close()
         return True
     except socket.error as e:
+        write_to_log(e)
         print(e)
         return False
 
 
 def main():
+    write_to_log("#----------------------------------------------------#")
+
     if len(sys.argv) != 5:
         print("Only " + str(len(sys.argv)) + " arguments were given! \
               Usage: tannerbot <username> <client_id> <token> <channel>")
+        write_to_log("Invalid arguments")
         sys.exit(1)
 
     username = sys.argv[1]
@@ -103,10 +100,8 @@ def main():
     elif channel_exists == -1:
         sys.exit(1)
     else:
-        write_to_log("Channel located!")
-        print("Channel located!")
-
-    s = connect(username, token, channel)
+        write_to_log("Channel " + channel + " located!")
+        print("Channel " + channel + " located!")
 
     # Loads Tanner pastas from tanner.txt file
     try:
@@ -116,6 +111,7 @@ def main():
         write_to_log("Messages loaded from tanner.txt file")
         print("Messages loaded from tanner.txt file")
     except IOError:
+        write_to_log("File tanner.txt is not available")
         print("File tanner.txt is not available")
         sys.exit(1)
 
@@ -134,7 +130,7 @@ def main():
             write_to_log("Channel " + channel + " is online")
             print("Channel " + channel + " is online")
             message = random.choice(messages)
-            if send_message(s, message, channel):
+            if send_message(message, channel, token, username):
                 write_to_log("Sent message: " + message)
                 print("Sent message: " + message)
         elif channel_live == 0:
