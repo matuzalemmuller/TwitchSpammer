@@ -31,7 +31,7 @@ Example:
 python3 tannerbot.py TannerBot xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx oauth:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy channel_name
 ```
 
-A container version of the app is also available in the [registry](https://gitlab.com/matuzalemmuller/tannerbot/container_registry). To run the container, you must run the following code:
+A container version of the app is also available in [DockerHub](https://hub.docker.com/r/matuzalemmuller/tannerbot). To run the container, you must run the following code:
 
 ```
 docker run --env USERNAME=username \
