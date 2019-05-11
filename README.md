@@ -38,5 +38,5 @@ docker run --env USERNAME=username \
            --env CLIENT_ID=client_id \
            --env OAUTH=token \
            --env CHANNEL=channel \
-           -d registry.gitlab.com/matuzalemmuller/tannerbot:v1.0
+           -d matuzalemmuller/tannerbot:v0.1
 ```
