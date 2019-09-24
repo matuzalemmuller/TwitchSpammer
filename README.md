@@ -3,15 +3,20 @@
 
 ## Description
 
-This project sends Tanner messages to a Twitch channel using your account. The messages are by default addressed to [Kripparian](https://www.twitch.tv/nl_kripp), but they will be addressed to any other streamer by calling them by the channel name. Messages are sent every 20 minutes to not flood the chat.
+This project sends Tanner messages to a Twitch channel using your account. The messages are by default addressed to [Kripparrian](https://www.twitch.tv/nl_kripp), but they can also be addressed to other streamers. Messages are sent every 20 minutes to not flood the chat.
 
 ## Who is Tanner?
 
 Definitely not a streamer. Why tell you, when I can [show you](https://www.reddit.com/r/LivestreamFail/comments/9qb1f8/tanner_jebaits_kripp/)?
 
+## Requirements
+
+* Python 3
+* Twitch account to register the application and send messages
+
 ## Instructions
 
-In order to run this code, you need to register an application in Twitch so you can get the client information to connect the bot to your account. More information on what is needed to run the bot below.
+In order to run this code, you need to register an application in Twitch to get the client information and connect the bot to your account. More information on what is needed to run the bot below.
 
 To run TannerBot, simply download this repo, install the dependencies and run the code.
 
