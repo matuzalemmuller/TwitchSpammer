@@ -42,7 +42,7 @@ python3 twitchspammer.py my_twitch_username xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx oauth
 
 ### DockerHub
 
-A container version of the app is also available in [DockerHub](https://hub.docker.com/r/matuzalemmuller/twitchspammer). To run the container, you must run the following code:
+A container version of the app is also available in [DockerHub](https://hub.docker.com/r/matuzalemmuller/twitchspammer). To run the container, you must run the following command:
 
 
 ```
