@@ -37,3 +37,18 @@ Example:
 ```
 python3 twitchspammer.py my_twitch_username xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx oauth:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy channel_name
 ```
+
+----
+
+### DockerHub
+
+A container version of the app is also available in [DockerHub](https://hub.docker.com/r/matuzalemmuller/twitchspammer). To run the container, you must run the following code:
+
+
+```
+docker run --env USERNAME=username \
+           --env CLIENT_ID=client_id \	
+           --env OAUTH=token \	
+           --env CHANNEL=channel \	
+           -d matuzalemmuller/twitchspammer:latest
+```
