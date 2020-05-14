@@ -1,7 +1,4 @@
 # TwitchSpammer
-*Hosted at [GitHub](https://github.com/matuzalemmuller/twitchspammer) and mirrored to [GitLab](https://gitlab.com/matuzalemmuller/twitchspammer).*
-
-## Description
 
 This project sends pre-defined messages to a Twitch channel using your account. The messages are sent every 35 minutes to not flood the chat.
 
