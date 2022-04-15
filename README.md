@@ -1,51 +1,67 @@
 # TwitchSpammer
 
-This project sends pre-defined messages to a Twitch channel using your account. The messages are sent every 35 minutes to not flood the chat.
+This project sends pre-defined messages to a Twitch channel using your account. The messages are sent every 30 minutes, and only if the channel is live.
 
-Watch out for Twitch's [Command & Message Limits](https://dev.twitch.tv/docs/irc/guide#command--message-limits)!
+Watch out for Twitch's [Rate Limits](https://dev.twitch.tv/docs/irc/guide#rate-limits)!
+
+*Disclaimer: because the communication happens over IRC, there is no way to confirm whether messages are published to the chat or not. Depending on the automod policies of the channel, rate limiting, and other factors, messages may not be published, although the logs report that messages are being sent.* 
+
+---
 
 ## Requirements
 
 * Python 3
-* Twitch account to register the application and send messages
+* Twitch account
 
 ## Instructions
 
-In order to run this code, you need to register an application in Twitch to get the client information and connect the bot to your account. More information on what is needed to run the bot below.
-
-To run TwitchSpammer, simply download this repo, install the dependencies and run the code.
+To run TwitchSpammer, simply download this repository, install the necessary dependencies, and run the code.
 
 ```
+# Install dependencies
 pip3 install -r requirements.txt
-python3 twitchspammer.py <username> <client_id> <token> <channel>
+
+# Run TwitchSpammer
+python3 twitchspammer.py --username=<twitch_username> \
+                         --oauth_token=<oauth_token>  \
+                         --channel=<channel_name>     \
+                         --interval=<interval_min>    \
+                         --messages=<filepath>        \
+                         --log=<path_to_logfile>
 ```
 
-* Username: Your Twitch username.
-* Client_Id: You need to create an app in the Twitch developer portal to get a `client_id`. More information in the [docs](https://dev.twitch.tv/docs/v5/#getting-a-client-id).
-* OAuth token: You can use [this page](https://twitchapps.com/tmi/) to get an OAuth token or check the [docs](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/) to learn how to manually create one.
-* Channel: Channel that you wish to send messages to.
+* `username`: the Twitch username;
+* `oauth_token`: the OAuth token. You can use [this page](https://twitchapps.com/tmi/) to get an OAuth token for your account or check the [official Twitch developer documentation](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/) to learn how to manually create one. The token must **not** include the `oauth:` prefix;
+* `channel`: channel that you wish to send messages to;
+* `messages`: file that has the messages to be sent to the channel chat. See an example on [`data/messages.txt`](./data/messages.txt);
+* `interval` (optional): interval between sending messages, in minutes;
+* `log` (optional): log file location. Example: `/tmp/log.log`.
 
-You can also customize the messages sent by modifying the file `data/messages.txt`.
-
-----
-
-Example:
-
-```
-python3 twitchspammer.py my_twitch_username xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx oauth:yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy channel_name
-```
-
-----
+---
 
 ### DockerHub
 
-A container version of the app is also available in [DockerHub](https://hub.docker.com/r/matuzalemmuller/twitchspammer). To run the container, you must run the following command:
-
+A container version of the app is also available in [DockerHub](https://hub.docker.com/r/matuzalemmuller/twitchspammer).
 
 ```
-docker run --env USERNAME=username \
-           --env CLIENT_ID=client_id \	
-           --env OAUTH=token \	
-           --env CHANNEL=channel \	
-           -d matuzalemmuller/twitchspammer:latest
+docker run --name twitchspammer                             \
+           --env USERNAME=<twitch_username>                 \
+           --env OAUTH=<oauth_token>                        \
+           --env CHANNEL=<channel_name>                     \
+           --env INTERVAL=<interval_min>                    \
+           --mount type=bind,src=<src_folder>,dst=/messages \
+           --mount type=bind,src=<src_folder>,dst=/log      \
+           matuzalemmuller/twitchspammer:latest
 ```
+
+Environment variables:
+
+* `USERNAME`: the Twitch username;
+* `OAUTH`: the OAuth token. You can use [this page](https://twitchapps.com/tmi/) to get an OAuth token for your account or check the [official Twitch developer documentation](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/) to learn how to manually create one. The token must **not** include the `oauth:` prefix;
+* `CHANNEL`: channel that you wish to send messages to;
+* `INTERVAL` (optional): the interval between sending messages, in minutes.
+
+Mounts:
+
+* `/messages`: the directory that contains the file with messages to be sent (`messages.txt`);
+* `/log`(optional): the directory where the logs will be saved.

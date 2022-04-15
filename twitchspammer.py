@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import argparse
 import datetime
 import json
 import logging
@@ -9,139 +11,234 @@ import sys
 import time
 from logging.handlers import RotatingFileHandler
 
-# Twitch endpoint and interval between messages to be sent
 HOST = "irc.chat.twitch.tv"  # twitch irc server
 PORT = 6667  # port
-MESSAGE_INTERVAL_MIN = 35  # message interval in minutes
+MESSAGE_INTERVAL_MIN = 30  # message interval in minutes
 MESSAGE_INTERVAL_SEC = MESSAGE_INTERVAL_MIN * 60  # message interval in seconds
 
-# Starts logging handler
-def start_logger():
-    formatter = '%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s'
+# Start logging handler
+def start_logger(logfile: str = None):
+    formatter = (
+        "%(asctime)s\t- %(levelname)s\t- %(funcName)s(%(lineno)d)\t- %(message)s"
+    )
     log_formatter = logging.Formatter(formatter)
-    logFile = 'log.log'
 
-    my_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5*1024*1024, 
-                                     backupCount=2, encoding=None, delay=0)
-    my_handler.setFormatter(log_formatter)
-    my_handler.setLevel(logging.INFO)
+    log_handler = RotatingFileHandler(
+        logfile,
+        mode="a",
+        maxBytes=5 * 1024 * 1024,
+        backupCount=2,
+        encoding=None,
+        delay=0,
+    )
+    log_handler.setFormatter(log_formatter)
+    log_handler.setLevel(logging.INFO)
 
-    app_log = logging.getLogger('root')
+    app_log = logging.getLogger("root")
     app_log.setLevel(logging.DEBUG)
-
-    app_log.addHandler(my_handler)
+    app_log.addHandler(log_handler)
 
     return app_log
 
-# Checks if twitch channel exists and if it is live
-def is_channel_live(clientId, channel, logger):
-    id_url = str('https://api.twitch.tv/helix/users?login=' + channel)
-    header = {'Client-ID' : clientId}
 
+# Call /validate to confirm that credentials are valid and extend oauth token
+def validate_credentials(username: str, oauth_token: str):
+    headers = {"Authorization": "OAuth " + oauth_token}
     try:
-        requests_id = requests.get(id_url, headers=header)
-        json_data = json.loads(requests_id.content)
-        channel_exists = len(json_data['data'])
-        if channel_exists == 0:
-            logger.error("Channel does not exist!")
-            print("Channel does not exist!")
-            sys.exit(1)
+        # https://dev.twitch.tv/docs/authentication/validate-tokens
+        r = requests.get("https://id.twitch.tv/oauth2/validate", headers=headers)
+        keys = r.json()
 
-        list_data = json_data['data'][0]
-        login_id = list_data.get('id', "0")
-
-        stream_url = 'https://api.twitch.tv/helix/streams?user_id=' + login_id
-        requests_stream = requests.get(stream_url, headers=header)
-        json_data = json.loads(requests_stream.content)
-        is_online = len(json_data['data'])
-        if is_online > 0:
-            return 1
+        if "client_id" in keys:
+            return {
+                "result": True,
+                "log": "Valid credentials",
+                "client_id": keys["client_id"],
+            }
         else:
-            return 0
+            return {"result": False, "log": keys["message"]}
     except requests.exceptions.RequestException as e:
-        logger.error(e)
-        print(e)
-        return -1
+        return {"result": False, "log": "Error: " + str(e)}
 
-# Connects to Twitch chat and sends message to twitch chat through socket
-def send_message(message, channel, token, username, logger):
+
+# Check if twitch channel exists and if it is live
+def is_channel_live(client_id: str, oauth_token: str, channel: str):
+    try:
+        headers = {"Client-ID": client_id, "Authorization": "Bearer " + oauth_token}
+        # https://dev.twitch.tv/docs/api/reference#get-streams
+        stream = requests.get(
+            "https://api.twitch.tv/helix/streams?user_login=" + channel,
+            headers=headers,
+        )
+        stream_data = stream.json()
+
+        if len(stream_data["data"]) == 1:
+            return {"result": 1, "log": "Channel " + channel + " is live"}
+        else:
+            return {"result": 0, "log": "Channel " + channel + " is offline"}
+    except requests.exceptions.RequestException as e:
+        return {"result": -1, "log": "Error: " + str(e)}
+
+
+# Select a message to be sent
+def select_message(filepath: str):
+    try:
+        with open(filepath, "r") as f:
+            data = f.read()
+        messages = data.split("\n")
+        message = random.choice(messages)
+        for i in range(10):
+            if message.replace(" ", "") == "":
+                message = random.choice(messages)
+            else:
+                break
+        if message.replace(" ", "") == "":
+            return {"result": False, "log": "Error: No valid messages"}
+        else:
+            return {"result": True, "log": "Message loaded", "message": message}
+    except IOError as e:
+        print(e)
+        return {"result": False, "log": "Error: " + str(e)}
+
+
+# Send message to channel using IRC via socket
+def send_message(message, channel, oauth_token, username):
     s = socket.socket()
-    channel = "#"+channel
+    channel = "#" + channel
     text = "PRIVMSG {} :{}".format(channel, message)
     text = text + "\r\n"
+    token = "oauth:" + oauth_token
     try:
         s.connect((HOST, PORT))
         s.send("PASS {}\r\n".format(token).encode("utf-8"))
         s.send("NICK {}\r\n".format(username).encode("utf-8"))
         s.send("JOIN {}\r\n".format(channel).encode("utf-8"))
-        s.send(text.encode('utf-8'))
+        s.send(text.encode("utf-8"))
         s.close()
-        return True
+        return {"result": True, "log": "Message sent"}
     except socket.error as e:
-        logger.error(e)
-        print(e)
-        return False
+        return {"result": False, "log": "Error: " + str(e)}
 
+
+# Main loop
 def main():
-    logger = start_logger()
-    logger.info("Starting TwitchSpammer")
-    
-    if len(sys.argv) != 5:
-        print("Only " + str(len(sys.argv)) + " arguments were given! \
-              Usage: twitchspammer <username> <client_id> <token> <channel>")
-        logger.error("Invalid arguments")
-        sys.exit(1)
+    # Parse arguments
+    all_args = argparse.ArgumentParser()
+    all_args.add_argument(
+        "--oauth_token", required=True, help="OAuth token for twitch account"
+    )
+    all_args.add_argument(
+        "--username", required=True, help="Twitch account username"
+    )
+    all_args.add_argument(
+        "--channel", required=True, help="Name of the channel to send messages"
+    )
+    all_args.add_argument(
+        "--messages", required=True, help="Location of file with messages to be sent"
+    )
+    all_args.add_argument(
+        "--interval", required=False, help="Interval to send messages"
+    )
+    all_args.add_argument(
+        "--log", required=False, help="Location of log file"
+    )
+    args = vars(all_args.parse_args())
 
-    username = sys.argv[1]
-    clientId = sys.argv[2]
-    if sys.argv[3][:6] != "oauth:":
-        token = "oauth:" + sys.argv[3]
+    oauth_token = str(args["oauth_token"])
+    username = str(args["username"])
+    channel = str(args["channel"])
+    filepath = str(args["messages"])
+    if args["log"] != None:
+        logpath = args["log"]
     else:
-        token = sys.argv[3]
-    channel = sys.argv[4].lower()
+        logpath = "twitchspammer.log"
+    if args["interval"] != None:
+        global MESSAGE_INTERVAL_MIN
+        MESSAGE_INTERVAL_MIN = int(args["interval"])
 
-    # Loads messages from messages.txt file
-    try:
-        text_file = open("data/messages.txt", 'r')
-        data = text_file.read()
-        messages = data.split("\n")
-        logger.info("Messages loaded from messages.txt file")
-        print("Messages loaded from messages.txt file")
-    except IOError:
-        logger.error("File messages.txt is not available")
-        print("File messages.txt is not available")
-        sys.exit(1)
+    # Start logger
+    logger = start_logger(logpath)
+    logger.info("Starting TwitchSpammer")
 
-    # Replaces "Octavian", "Kripp" and "Kripparian" in messages by
-    # channel name if channel is not nl_Kripp
-    if channel != "nl_kripp":
-        messages=[m.replace('Octavian', channel) for m in messages]
-        messages=[m.replace('"Kripparrian"','"'+channel+'"') for m in messages]
-        messages=[m.replace('Kripp', channel) for m in messages]
+    # Confirm that message file exists and is not empty
+    validate_messages_file = select_message(filepath=filepath)
+    if validate_messages_file["result"]:
+        logger.info(validate_messages_file["log"])
+        print(str(datetime.datetime.now()) + " - " + validate_messages_file["log"])
+    else:
+        logger.error(validate_messages_file["log"])
+        print(str(datetime.datetime.now()) + " - " + validate_messages_file["log"])
+        sys.exit(-1)
 
-    # Sends a random message from messages every MESSAGE_INTERVAL_SEC if 
-    # streamer is online
     while True:
-        channel_live = is_channel_live(clientId, channel, logger)
-        if channel_live > 0:
-            logger.info("Channel " + channel + " is online")
-            print("Channel " + channel + " is online")
-            message = random.choice(messages)
-            if send_message(message, channel, token, username, logger):
-                logger.info("Sent message: " + message)
-                print("Sent message: " + message)
-        elif channel_live == 0:
-            logger.info("Channel " + channel + " is offline")
-            print("Channel " + channel + " is offline")
+        # Validate/extend oauth token
+        check_credentials = validate_credentials(
+            username=username, oauth_token=oauth_token
+        )
+        if check_credentials["result"]:
+            logger.info(check_credentials["log"])
+            print(str(datetime.datetime.now()) + " - " + check_credentials["log"])
         else:
-            pass
+            logger.error(check_credentials["log"])
+            print(str(datetime.datetime.now()) + " - " + check_credentials["log"])
+            sys.exit(-1)
+        client_id = check_credentials["client_id"]
+
+        logger.info("Time to send message")
+        print(str(datetime.datetime.now()) + " - " + "Time to send message")
+
+        # If channel is live, send message
+        channel_live = is_channel_live(
+            client_id=client_id, oauth_token=oauth_token, channel=channel
+        )
+        if channel_live["result"] > 0:
+            logger.info(channel_live["log"])
+            print(str(datetime.datetime.now()) + " - " + channel_live["log"])
+            message = select_message(filepath=filepath)
+            if not message["result"]:
+                print(str(datetime.datetime.now()) + " - " + message["log"])
+                logger.error(message["log"])
+                sys.exit(-1)
+            logger.info(message["log"] + ": " + message["message"])
+            print(
+                str(datetime.datetime.now())
+                + " - "
+                + message["log"]
+                + ": "
+                + message["message"]
+            )
+            result = send_message(
+                message=message["message"],
+                username=username,
+                oauth_token=oauth_token,
+                channel=channel,
+            )
+            if result["result"]:
+                logger.info(result["log"])
+                print(str(datetime.datetime.now()) + " - " + result["log"])
+            else:
+                logger.error(result["log"])
+                print(str(datetime.datetime.now()) + " - " + result["log"])
+                sys.exit(1)
+        elif channel_live["result"] == 0:
+            logger.info(channel_live["log"])
+            print(str(datetime.datetime.now()) + " - " + channel_live["log"])
+        else:
+            logger.error(channel_live["log"])
+            print(str(datetime.datetime.now()) + " - " + channel_live["log"])
+            sys.exit(-1)
 
         # Wait to send another message
+        print(
+            str(datetime.datetime.now())
+            + " - "
+            + "Waiting "
+            + str(MESSAGE_INTERVAL_MIN)
+            + " minutes..."
+        )
         logger.info("Waiting " + str(MESSAGE_INTERVAL_MIN) + " minutes...")
-        print("Waiting " + str(MESSAGE_INTERVAL_MIN) + " minutes...")
         time.sleep(MESSAGE_INTERVAL_SEC)
-        logger.info("Time to send message!")
-        print("Time to send message!")
+
 
 if __name__ == "__main__":
     main()
