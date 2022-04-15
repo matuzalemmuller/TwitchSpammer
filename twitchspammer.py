@@ -17,19 +17,25 @@ MESSAGE_INTERVAL_MIN = 30  # message interval in minutes
 MESSAGE_INTERVAL_SEC = MESSAGE_INTERVAL_MIN * 60  # message interval in seconds
 
 # Start logging handler
-def start_logger():
+def start_logger(logfile: str = None):
     formatter = (
         "%(asctime)s\t- %(levelname)s\t- %(funcName)s(%(lineno)d)\t- %(message)s"
     )
     log_formatter = logging.Formatter(formatter)
 
     log_handler = RotatingFileHandler(
-        filepath + "/log.log", maxBytes=5 * 1024 * 1024, backupCount=2
+        logfile,
+        mode="a",
+        maxBytes=5 * 1024 * 1024,
+        backupCount=2,
+        encoding=None,
+        delay=0,
     )
     log_handler.setFormatter(log_formatter)
     log_handler.setLevel(logging.INFO)
 
     app_log = logging.getLogger("root")
+    app_log.setLevel(logging.DEBUG)
     app_log.addHandler(log_handler)
 
     return app_log
@@ -39,6 +45,7 @@ def start_logger():
 def validate_credentials(username: str, oauth_token: str):
     headers = {"Authorization": "OAuth " + oauth_token}
     try:
+        # https://dev.twitch.tv/docs/authentication/validate-tokens
         r = requests.get("https://id.twitch.tv/oauth2/validate", headers=headers)
         keys = r.json()
 
@@ -58,6 +65,7 @@ def validate_credentials(username: str, oauth_token: str):
 def is_channel_live(client_id: str, oauth_token: str, channel: str):
     try:
         headers = {"Client-ID": client_id, "Authorization": "Bearer " + oauth_token}
+        # https://dev.twitch.tv/docs/api/reference#get-streams
         stream = requests.get(
             "https://api.twitch.tv/helix/streams?user_login=" + channel,
             headers=headers,
@@ -119,15 +127,20 @@ def main():
     all_args.add_argument(
         "--oauth_token", required=True, help="OAuth token for twitch account"
     )
-    all_args.add_argument("--username", required=True, help="Twitch account username")
+    all_args.add_argument(
+        "--username", required=True, help="Twitch account username"
+    )
     all_args.add_argument(
         "--channel", required=True, help="Name of the channel to send messages"
     )
     all_args.add_argument(
-        "--messages", required=True, help="File with messages to be sent"
+        "--messages", required=True, help="Location of file with messages to be sent"
     )
     all_args.add_argument(
         "--interval", required=False, help="Interval to send messages"
+    )
+    all_args.add_argument(
+        "--log", required=False, help="Location of log file"
     )
     args = vars(all_args.parse_args())
 
@@ -135,22 +148,26 @@ def main():
     username = str(args["username"])
     channel = str(args["channel"])
     filepath = str(args["messages"])
+    if args["log"] != None:
+        logpath = args["log"]
+    else:
+        logpath = "twitchspammer.log"
     if args["interval"] != None:
         global MESSAGE_INTERVAL_MIN
         MESSAGE_INTERVAL_MIN = int(args["interval"])
 
     # Start logger
-    logger = start_logger()
+    logger = start_logger(logpath)
     logger.info("Starting TwitchSpammer")
 
     # Confirm that message file exists and is not empty
     validate_messages_file = select_message(filepath=filepath)
     if validate_messages_file["result"]:
         logger.info(validate_messages_file["log"])
-        print(validate_messages_file["log"])
+        print(str(datetime.datetime.now()) + " - " + validate_messages_file["log"])
     else:
         logger.error(validate_messages_file["log"])
-        print(validate_messages_file["log"])
+        print(str(datetime.datetime.now()) + " - " + validate_messages_file["log"])
         sys.exit(-1)
 
     while True:
@@ -160,15 +177,15 @@ def main():
         )
         if check_credentials["result"]:
             logger.info(check_credentials["log"])
-            print(check_credentials["log"])
+            print(str(datetime.datetime.now()) + " - " + check_credentials["log"])
         else:
             logger.error(check_credentials["log"])
-            print(check_credentials["log"])
+            print(str(datetime.datetime.now()) + " - " + check_credentials["log"])
             sys.exit(-1)
         client_id = check_credentials["client_id"]
 
-        logger.info("Time to send message!")
-        print("Time to send message!")
+        logger.info("Time to send message")
+        print(str(datetime.datetime.now()) + " - " + "Time to send message")
 
         # If channel is live, send message
         channel_live = is_channel_live(
@@ -176,14 +193,20 @@ def main():
         )
         if channel_live["result"] > 0:
             logger.info(channel_live["log"])
-            print(channel_live["log"])
+            print(str(datetime.datetime.now()) + " - " + channel_live["log"])
             message = select_message(filepath=filepath)
             if not message["result"]:
-                print(message["log"])
+                print(str(datetime.datetime.now()) + " - " + message["log"])
                 logger.error(message["log"])
                 sys.exit(-1)
             logger.info(message["log"] + ": " + message["message"])
-            print(message["log"] + ": " + message["message"])
+            print(
+                str(datetime.datetime.now())
+                + " - "
+                + message["log"]
+                + ": "
+                + message["message"]
+            )
             result = send_message(
                 message=message["message"],
                 username=username,
@@ -192,21 +215,27 @@ def main():
             )
             if result["result"]:
                 logger.info(result["log"])
-                print(result["log"])
+                print(str(datetime.datetime.now()) + " - " + result["log"])
             else:
                 logger.error(result["log"])
-                print(result["log"])
+                print(str(datetime.datetime.now()) + " - " + result["log"])
                 sys.exit(1)
         elif channel_live["result"] == 0:
             logger.info(channel_live["log"])
-            print(channel_live["log"])
+            print(str(datetime.datetime.now()) + " - " + channel_live["log"])
         else:
             logger.error(channel_live["log"])
-            print(channel_live["log"])
+            print(str(datetime.datetime.now()) + " - " + channel_live["log"])
             sys.exit(-1)
 
         # Wait to send another message
-        print("Waiting " + str(MESSAGE_INTERVAL_MIN) + " minutes...")
+        print(
+            str(datetime.datetime.now())
+            + " - "
+            + "Waiting "
+            + str(MESSAGE_INTERVAL_MIN)
+            + " minutes..."
+        )
         logger.info("Waiting " + str(MESSAGE_INTERVAL_MIN) + " minutes...")
         time.sleep(MESSAGE_INTERVAL_SEC)
 
